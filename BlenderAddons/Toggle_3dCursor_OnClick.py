@@ -39,13 +39,16 @@ def draw_item(self, context):
     layout = self.layout
     
     col = layout.column()
-    col.prop(cursor_key, "active", text="Toggle LMB", toggle=True)
+    col.prop(wm, "toggle_3DKey")
+    cursor_key.active = wm.toggle_3DKey
 
 def register():
     bpy.types.VIEW3D_PT_view3d_cursor.append(draw_item)
+    bpy.types.WindowManager.toggle_3DKey = BoolProperty(name="Toggle LMB", description="Controls whether the 3D cursor moves on left mouse click", default=True)
         
 def unregister():
     bpy.types.VIEW3D_PT_view3d_cursor.remove(draw_item)
+    del bpy.types.WindowManager.toggle_3DKey
     
 if __name__ == "__main__":
     register()
