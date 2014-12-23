@@ -22,45 +22,30 @@ bl_info = {
     "author": "Ryan Sweeney",
     "version": (1, 0),
     "blender": (2, 72, 0),
-    "location": "View3D > Properties Panel > 3D Cursor Toggle",
+    "location": "View3D > Properties Panel > 3D Cursor",
     "description": "Adds a toggle to the 3D Cursor in the properties tab.",
     "warning": "",
-    "wiki_url": "http://sweenist.wordpress.com",
+    "wiki_url": "http://sweenist.wordpress.com/2014/12/22/blender-add-on-3d-cursor-toggle/",
     "category": "3D View"}
 
 import bpy
 from bpy.types import Panel
 from bpy.props import BoolProperty
-
-#class VIEW3D_PT_view3d_cursor_toggle(VIEW3D_PT_view3d_cursor):
-class VIEW3D_PT_view3d_cursor_toggle(Panel):
-    """Turns Mouse Action on/off for placing 3D Cursor"""
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_label = "3D Cursor Toggle"
-    bl_idname = "view3d.cursor3dtoggle"
     
-    #cursor_toggle_key = BoolProperty(default=True, name="3d_cursor_click_toggle")
+def draw_item(self, context):
+    wm = context.window_manager
+    keymaps = wm.keyconfigs['Blender User'].keymaps['3D View'].keymap_items
+    cursor_key = keymaps['view3d.cursor3d']
+    layout = self.layout
     
-    @classmethod
-    def poll(cls, context):
-        view = context.space_data
-        return (view is not None)
-    
-    def draw(self, context):
-        wm = context.window_manager
-        keymaps = wm.keyconfigs['Blender User'].keymaps['3D View'].keymap_items
-        cursor_key = keymaps['view3d.cursor3d']
-        layout = self.layout
-        
-        col = layout.column()
-        col.prop(cursor_key, "active", text="Toggle LMB", toggle=True)
+    col = layout.column()
+    col.prop(cursor_key, "active", text="Toggle LMB", toggle=True)
 
 def register():
-    bpy.utils.register_class(VIEW3D_PT_view3d_cursor_toggle)
-    
+    bpy.types.VIEW3D_PT_view3d_cursor.append(draw_item)
+        
 def unregister():
-    bpy.utils.unregister_class(VIEW3D_PT_view3d_cursor_toggle)
+    bpy.types.VIEW3D_PT_view3d_cursor.remove(draw_item)
     
 if __name__ == "__main__":
     register()
