@@ -20,8 +20,8 @@ bl_info = {
     "name": "Luthier Tool",
     "author": "Ryan Sweeney",
     "version": (0, 0),
-    "blender": (2, 71, 0),
-    "location": "View3D > Add > Mesh > New Object",
+    "blender": (2, 72, 0),
+    "location": "View3D > Add > Mesh > FretBoard",
     "description": "Adds a scaleable fretboard Mesh Object",
     "warning": "",
     "wiki_url": "http://sweenist.wordpress.com",
@@ -31,6 +31,10 @@ import bpy
 from bpy.types import Operator, Panel
 from bpy.props import FloatProperty, BoolProperty, IntProperty
 from mathutils import Vector
+
+def deselect_all(context):
+    for o in context.scene.objects:
+        o.select = False
 
 def float_range(start = 0.0, end = 1.0, step = 1.0):
     r = start
@@ -42,8 +46,7 @@ def add_fret_board():
     verts = []
     faces = []
     
-def add_nut(width):
-    print("width: %.2f" % width)
+def add_nut(width):    
     verts = []
     faces = []
     for x in float_range(-width/2.00, ((width/2.00) + (width/4.00)), width/4.00):
@@ -55,8 +58,20 @@ def add_nut(width):
         faces.append((i*3, i*3 + 1, (i+1)*3 + 1, (i+1)* 3))
         faces.append(((i*3) + 1, (i*3) + 2, (i+1)*3 + 2, (i+1)*3 + 1))
         
-    print (verts)
-    print(faces)
+    return verts, faces
+
+def add_bridge(width, length):
+    verts = []
+    faces = []
+    for x in float_range(-width/2.00, ((width/2.00) + (width/4.00)), width/4.00):
+        verts.append((x, 0.00, 0.45))
+        verts.append((x, 0.00, 0.20))
+        verts.append((x, -.50, 0.20))
+
+    for i in range(4):
+        faces.append((i*3, i*3 + 1, (i+1)*3 + 1, (i+1)* 3))
+        faces.append(((i*3) + 1, (i*3) + 2, (i+1)*3 + 2, (i+1)*3 + 1))
+        
     return verts, faces
 
 class AddFretBoard(Operator):
@@ -116,7 +131,9 @@ class AddFretBoard(Operator):
         col = layout.column(align=True)
         col.label(text="Scale Length")
         col.prop(self, 'scale_length',text="")
+        layout.separator()
         
+        #Fret Curvature
         row = layout.row(align=True)
         row.alignment = 'EXPAND'
         row.label(text="Fret Curvature:")
@@ -127,26 +144,44 @@ class AddFretBoard(Operator):
         col.prop(self, 'fret_radius', text="")
         layout.separator()
         
+        #Nut Width
         col = layout.column(align=True)
         col.label(text="Nut Width:")
         col.prop(self, 'nut_width', text="")
         
+        #Bridge Width
         col = layout.column(align=True)
         col.label(text="Bridge Width:")
         col.prop(self, 'bridge_width', text="")
         
-    def execute(self, context):
-        nut_v, nut_f = add_nut(self.nut_width)
-        
+    def execute(self, context):        
+        #Build the Nut Mesh
+        nut_v, nut_f = add_nut(self.nut_width)        
         nut_mesh = bpy.data.meshes.new("Nut_mesh")
         nut_mesh.from_pydata(nut_v, [], nut_f)
         nut_mesh.update()
         
-        nut_object = bpy.data.objects.new("Nut", nut_mesh)
+        #Build the Bridge Mesh
+        bridge_v, bridge_f = add_bridge(self.bridge_width, self.scale_length)
+        bridge_mesh = bpy.data.meshes.new("Bridge_Mesh")
+        bridge_mesh.from_pydata(bridge_v, [], bridge_f)
+        bridge_mesh.update()
+        
+        #Create objects from the mesh and link to scene
+        nut_object      = bpy.data.objects.new("Nut", nut_mesh)
+        bridge_object   = bpy.data.objects.new("Bridge", bridge_mesh)
         context.scene.objects.link(nut_object)
+        context.scene.objects.link(bridge_object)
+        
+        #place Bridge scale length away from Nut
+        deselect_all(context)
+        bridge_object.select = True
+        bpy.ops.transform.translate(value=(0, -self.scale_length, 0), constraint_axis=(False, True, False))
+        
         return {'FINISHED'}
     
 class INFO_MT_fretboard_add(bpy.types.Menu):
+    #add to the "Add Mesh" menu
     bl_idname = "INFO_MT_fretboard_add"
     bl_label = "Guitar Objects"
     
