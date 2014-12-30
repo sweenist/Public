@@ -27,20 +27,13 @@ bl_info = {
     "wiki_url": "http://sweenist.wordpress.com",
     "category": "Add Mesh"}
 
-if "bpy" in locals():
-    import imp
-    imp.reload(luthiHelpers)
-    imp.reload(luthiDraw)
-    print("Reloaded LuthiTools Files")
-else:
-    #from . 
-    import luthiHelpers as helper
-    from luthiDraw import *
-    print("Imported LuthiTools Files")
+import luthi_helper as helper
+from luthi_draw import *
+print("Imported LuthiTools Files")
 
 import bpy
 from bpy.types import Operator, Panel
-from bpy.props import FloatProperty, BoolProperty, IntProperty
+from bpy.props import FloatProperty, BoolProperty, IntProperty, EnumProperty
 from mathutils import Vector
 
 
@@ -68,14 +61,21 @@ class AddFretBoard(Operator):
     fret_radius = FloatProperty(
         name = "Fretboard Radius",
         description = "Fretboard curvature/falloff. Uncheck Flatten for classical flat fretboard",
-        min = 2.5,
-        max = 50.0,
-        default = 12.0
+        min = 2.50,
+        max = 50.00,
+        default = 12.00,
     )    
     isFlat = BoolProperty(
         name = "Flatten",
         description = "Uncheck this to have a classical flat fretboard",
         default = False
+    )
+    fb_bottom_width = FloatProperty(
+        name = "FB Bottom Width",
+        description = "Width of fret board at the last fret. Used to determine taper",
+        min = 1.625,
+        max = 2.5,
+        default = 2.125
     )
     nut_width = FloatProperty(
         name = "Nut Width",
@@ -83,14 +83,16 @@ class AddFretBoard(Operator):
         min = 0.005,
         max = 10.00,
         default = 1.625
-    )
+    )    
     bridge_width = FloatProperty(
         name = "Bridge Width",
         description = "Width of guitar bridge",
         min = 0.005,
         max = 12.00,
-        default = 2.188
-    )
+        default = 2.5,
+    )    
+    #Inlays
+    #add enum proprties
     
     def draw(self, context):
         layout = self.layout
@@ -104,25 +106,35 @@ class AddFretBoard(Operator):
         layout.separator()
         
         #Fret Curvature
-        row = layout.row(align=True)
-        row.alignment = 'EXPAND'
-        row.label(text="Fret Curvature:")
+        box = layout.box()
+        box.label("Fretboard Curvature:")
+        row = box.row(align=True)      
+        row.alignment = 'RIGHT'
         row.prop(self, 'isFlat')
+                
+        row = box.row(align=True)
+        row.alignment = 'RIGHT'
+        row.label(text="Curvature Radius:")
         
-        col = layout.column(align=True)
-        col.enabled = not self.isFlat
-        col.prop(self, 'fret_radius', text="")
-        layout.separator()
+        row.enabled = not self.isFlat
+        row.prop(self, 'fret_radius', text="")
         
+        #varying widths
+        box = layout.box()        
+        box.label(text="Wideness")
         #Nut Width
-        col = layout.column(align=True)
-        col.label(text="Nut Width:")
-        col.prop(self, 'nut_width', text="")
+        row = box.row()
+        row.label(text="Nut:")
+        row.prop(self, 'nut_width', text="Width")
         
+        #Fretboard bottom Width
+        row = box.row()
+        row.label(text="Fretboard Bottom")
+        row.prop(self, 'fb_bottom_width', text="Width")
         #Bridge Width
-        col = layout.column(align=True)
-        col.label(text="Bridge Width:")
-        col.prop(self, 'bridge_width', text="")
+        row = box.row()
+        row.label(text="Bridge:")
+        row.prop(self, 'bridge_width', text="Width")
         
     def execute(self, context):        
         #Build the Nut Mesh
@@ -136,6 +148,10 @@ class AddFretBoard(Operator):
         bridge_mesh = bpy.data.meshes.new("Bridge_Mesh")
         bridge_mesh.from_pydata(bridge_v, [], bridge_f)
         bridge_mesh.update()
+        
+        #Build the fretboard
+        
+        #Build the frets
         
         #Create objects from the mesh and link to scene
         nut_object      = bpy.data.objects.new("Nut", nut_mesh)
