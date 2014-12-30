@@ -1,14 +1,14 @@
 import bpy
-import luthiHelpers as helper
+import luthi_helper as helper
 
 def add_fret_board():
     verts = []
     faces = []
     
 def add_nut(width):    
-    """returns the vertices and face components of the nut mesh"""
     verts = []
     faces = []
+    print(helper)
     for x in helper.float_range(-width/2.00, ((width/2.00) + (width/4.00)), width/4.00):
         verts.append((x, 0.00, 0.25))
         verts.append((x, 0.00, 0.00))
@@ -21,7 +21,6 @@ def add_nut(width):
     return verts, faces
 
 def add_bridge(width, length):
-    """returns the vertices and face components of the Bridge mesh"""
     verts = []
     faces = []
     for x in helper.float_range(-width/2.00, ((width/2.00) + (width/4.00)), width/4.00):
