@@ -35,6 +35,7 @@ def fretboard_curve_face(radius, width):
     return z1 - offset, z2 - offset, x1, x2
 
 def get_fret_width(min_width, max_width, max_length, current_length):
+    #return the width of the fretboard at the specified fret
     variance = max_width - min_width
     current_width = min_width + (variance * (current_length/max_length))
     return current_width

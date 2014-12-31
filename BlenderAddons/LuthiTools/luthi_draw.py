@@ -90,10 +90,11 @@ def add_fret(width, depth, height):
     return verts, faces
 
 def add_fret_board(fret_count, scale_length, min_width, max_width, curve_radius = None, overhang = True):
-    verts = [( min_width / 2.0, 0.00, 0.00),
-             (-min_width / 2.0, 0.00, 0.00),
-             ( min_width / 2.0, 0.00, helper.FB_THICKNESS),
-             (-min_width / 2.0, 0.00, helper.FB_THICKNESS)
+
+    verts = [( min_width / 2.0, 0.00, 0.00),    #0
+             (-min_width / 2.0, 0.00, 0.00),    #1
+             ( min_width / 2.0, 0.00, helper.FB_THICKNESS), #2
+             (-min_width / 2.0, 0.00, helper.FB_THICKNESS)  #3
     ]
     faces = []
     frets = []
@@ -106,10 +107,12 @@ def add_fret_board(fret_count, scale_length, min_width, max_width, curve_radius 
         overhang_y = helper.fret_spacer(scale_length, fret_count + 1)
     else:
         overhang_y = frets[-1]
-    verts.append(( max_width / 2.0, overhang_y, 0.00))
-    verts.append((-max_width / 2.0, overhang_y, 0.00))
-    verts.append(( max_width / 2.0, overhang_y, helper.FB_THICKNESS))
-    verts.append((-max_width / 2.0, overhang_y, helper.FB_THICKNESS))
+    
+    #Add Fretboard vertices
+    verts.append(( max_width / 2.0, overhang_y, 0.00))  #4
+    verts.append((-max_width / 2.0, overhang_y, 0.00))  #5
+    verts.append(( max_width / 2.0, overhang_y, helper.FB_THICKNESS))   #6
+    verts.append((-max_width / 2.0, overhang_y, helper.FB_THICKNESS))   #7
     
     #Add curvature
     if curvature:
@@ -117,38 +120,55 @@ def add_fret_board(fret_count, scale_length, min_width, max_width, curve_radius 
         min_z1, min_z2, min_x1, min_x2 = helper.fretboard_curve_face(curve_radius, min_width)
         max_z1, max_z2, max_x1, max_x2 = helper.fretboard_curve_face(curve_radius, max_width)
         
-        verts.append(( min_x1, 0.00, min_z1))
-        verts.append((-min_x1, 0.00, min_z1))
-        verts.append(( min_x2, 0.00, min_z2))
-        verts.append((-min_x2, 0.00, min_z2))
-        verts.append(( max_x1, frets[-1], max_z1))
-        verts.append((-max_x1, frets[-1], max_z1))
-        verts.append(( max_x2, frets[-1], max_z2))
-        verts.append((-max_x2, frets[-1], max_z2))
+        verts.append(( min_x1, 0.00, min_z1))   #8
+        verts.append((-min_x1, 0.00, min_z1))   #9
+        verts.append(( min_x2, 0.00, min_z2))   #10
+        verts.append((-min_x2, 0.00, min_z2))   #11
+        verts.append(( max_x1, frets[-1], max_z1))  #12
+        verts.append((-max_x1, frets[-1], max_z1))  #13
+        verts.append(( max_x2, frets[-1], max_z2))  #14
+        verts.append((-max_x2, frets[-1], max_z2))  #15
 
-        if fret_count > 5:
-            f5_width = get_fret_width(min_width, max_width, overhang_y, frets[5])
+    if fret_count > 5:
+        #get fret 5 width
+        f5_width = get_fret_width(min_width, max_width, overhang_y, frets[5])
+        #add verts around fret 5
+        verts.append(( mid_width / 2.0, frets[5], 0.00))    #16, #8 w/o cur
+        verts.append((-mid_width / 2.0, frets[5], 0.00))    #17, #9
+        verts.append(( mid_width / 2.0, frets[5], helper.FB_THICKNESS)) #18, #10
+        verts.append((-mid_width / 2.0, frets[5], helper.FB_THICKNESS)) #19, #11
+        
+        if curvature:
             f5_z1, f5_z2, f5_x1, f5_x2 = fretboard_curve_face(curve_radius, f5_width)
             
-            verts.append(( f5_x1, frets[5], f5_z1))
-            verts.append((-f5_x1, frets[5], f5_z1))
-            verts.append(( f5_x2, frets[5], f5_z2))
-            verts.append((-f5_x2, frets[5], f5_z2))
+            verts.append(( f5_x1, frets[5], f5_z1)) #20
+            verts.append((-f5_x1, frets[5], f5_z1)) #21
+            verts.append(( f5_x2, frets[5], f5_z2)) #22
+            verts.append((-f5_x2, frets[5], f5_z2)) #23
 
-        if fret_count > 12:
-            mid_width = get_fret_width(min_width, max_width, overhang_y, frets[12])
+    if fret_count > 12:
+        mid_width = get_fret_width(min_width, max_width, overhang_y, frets[12])
+        verts.append(( mid_width / 2.0, frets[12], 0.00))   #24, #12 w/o cur
+        verts.append((-mid_width / 2.0, frets[12], 0.00))   #25, #13
+        verts.append(( mid_width / 2.0, frets[12], helper.FB_THICKNESS)) #26, #14
+        verts.append((-mid_width / 2.0, frets[12], helper.FB_THICKNESS)) #27, #15
+
+        if curvature:
             mid_z1, mid_z2, mid_x1, mid_x2 = fretboard_curve_face(curve_radius, mid_width)
             
-            verts.append(( mid_x1, frets[12], mid_z1))
-            verts.append((-mid_x1, frets[12], mid_z1))
-            verts.append(( mid_x2, frets[12], mid_z2))
-            verts.append((-mid_x2, frets[12], mid_z2))
-            
-        #append faces
-        faces.append()
-    else:
-        #append faces
-        faces.append()
+            verts.append(( mid_x1, frets[12], mid_z1))  #28
+            verts.append((-mid_x1, frets[12], mid_z1))  #29
+            verts.append(( mid_x2, frets[12], mid_z2))  #30
+            verts.append((-mid_x2, frets[12], mid_z2))  #31
+        
+    #append faces. This is tricky. Options are:
+    #   Curvature > 12 frets
+    #   Curvature > 5 < 12 frets
+    #   Curvature < 5  Who would do this? Not going to limit anyone but still...
+    #   Flat      > 12 frets    Exclude 28 - 31
+    #   Flat      > 5 < 12 frets
+    #   Flat      < 5 frets
+    faces.append()
         
     return verts, faces
 

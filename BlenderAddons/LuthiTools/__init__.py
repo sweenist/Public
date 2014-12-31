@@ -23,7 +23,7 @@ bl_info = {
     "blender": (2, 72, 0),
     "location": "View3D > Add > Mesh > FretBoard",
     "description": "Adds a scaleable fretboard Mesh Object",
-    "warning": "",
+    "warning": "Still a work in progress",
     "wiki_url": "http://sweenist.wordpress.com",
     "category": "Add Mesh"}
 
