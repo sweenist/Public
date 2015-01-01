@@ -25,17 +25,17 @@ bl_info = {
     "description": "Adds a scaleable fretboard Mesh Object",
     "warning": "Still a work in progress",
     "wiki_url": "http://sweenist.wordpress.com",
-    "category": "Add Mesh"}
+    "category": "Add Mesh"
+}
 
 import luthi_helper as helper
 from luthi_draw import *
-print("Imported LuthiTools Files")
+import os
 
 import bpy
 from bpy.types import Operator, Panel
 from bpy.props import FloatProperty, BoolProperty, IntProperty, EnumProperty
 from mathutils import Vector
-
 
 class AddFretBoard(Operator):
     """Add a Fretboard! Includes contact space for the nut and the bridge."""
@@ -150,14 +150,22 @@ class AddFretBoard(Operator):
         bridge_mesh.update()
         
         #Build the fretboard
+        fb_v, fb_f = add_fret_board(self.fret_count, self.scale_length, self.nut_width, self.fb_bottom_width, curve_radius = self.fret_radius, overhang = True)
         
+        for v in fb_v:
+            print(v)
+        fb_mesh = bpy.data.meshes.new("FB_Mesh")
+        fb_mesh.from_pydata(fb_v, [], fb_f)
+        fb_mesh.update()
         #Build the frets
         
         #Create objects from the mesh and link to scene
         nut_object      = bpy.data.objects.new("Nut", nut_mesh)
         bridge_object   = bpy.data.objects.new("Bridge", bridge_mesh)
+        fb_object       = bpy.data.objects.new("FretBoard", fb_mesh)
         context.scene.objects.link(nut_object)
         context.scene.objects.link(bridge_object)
+        context.scene.objects.link(fb_object)
         
         #place Bridge scale length away from Nut
         helper.deselect_all(context)
@@ -188,4 +196,9 @@ def unregister():
     bpy.types.INFO_MT_mesh_add.remove(menu_func)
     
 if __name__ == "__main__":
+    try:
+        unregister()
+        print("module unregistered")
+    except:
+        print("Nothing to unregister")
     register()

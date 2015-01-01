@@ -9,7 +9,7 @@ def deselect_all(context):
         o.select = False
         
 def fret_spacer(scale_length, fret_number):
-    return scale_length - (scale_length/(2**(fret_number / 12)))
+    return -(scale_length - (scale_length/(2**(fret_number / 12))))
 
 def float_range(start = 0.0, end = 1.0, step = 1.0):
     r = start
@@ -24,7 +24,7 @@ def fretboard_curve_face(radius, width):
     #   x1 = 3/5th between middle and outer edge
     #   x2 - 1/5th between middle and outer edge
     # outer egde z will be equal to 0.1875 (3/16). This is a constant
-    offset = scale_length - FB_THICKNESS
+    offset = radius - FB_THICKNESS
     
     x1 = width * 0.30
     x2 = width * 0.10
