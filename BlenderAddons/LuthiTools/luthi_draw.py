@@ -1,4 +1,5 @@
 import bpy
+import bmesh
 import luthi_helper as helper
 from math import pi, sqrt, sin, cos
 
@@ -129,29 +130,33 @@ def add_fret_board(fret_count, scale_length, min_width, max_width, curve_radius 
         verts.append(( max_x2, overhang_y, max_z2))  #15
         verts.append((-max_x2, overhang_y, max_z2))  #16
 
-        verts.append(( max_x2, overhang_y, 0.00))  #17
-        verts.append((-max_x2, overhang_y, 0.00))  #18
+        verts.append(( max_x1, overhang_y, 0.00))  #17
+        verts.append((-max_x1, overhang_y, 0.00))  #18
         verts.append(( max_x2, overhang_y, 0.00))  #19
         verts.append((-max_x2, overhang_y, 0.00))  #20
         
     #append faces
     if curve_radius:
         faces.extend([
-            ( 4, 2,12,10),
-            ( 1, 3, 9,11),
-            ( 1, 2,12,11),
-            ( 4, 2, 6, 8),
-            ( 8,14,18, 6),
-            (14,18,20,16),
-            (20,16,15,19),
-            (15,19,17,13),
-            (13,17, 5, 7),
-            ( 5, 7, 3, 1),
-            ( 3, 9,13, 7),
-            (13,15,11, 9),
-            (11,15,16,12),
-            (16,12,10,14),
-            (10,14, 8, 4)
+            ( 3, 1,11, 9),
+            ( 0, 2, 8,10),
+            ( 0, 1,11,10),
+            ( 3, 1, 5, 7),
+            #( 4, 2,12,10),
+            #( 1, 3, 9,11),
+            #( 1, 2,12,11),
+            #( 4, 2, 6, 8),
+            #( 8,14,18, 6),
+            #(14,18,20,16),
+            #(20,16,15,19),
+            #(15,19,17,13),
+            #(13,17, 5, 7),
+            #( 5, 7, 3, 1),
+            #( 3, 9,13, 7),
+            #(13,15,11, 9),
+            #(11,15,16,12),
+            #(16,12,10,14),
+            #(10,14, 8, 4)
             ]
         )
     #flat fretboard

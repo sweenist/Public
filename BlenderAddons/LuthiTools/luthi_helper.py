@@ -24,15 +24,19 @@ def fretboard_curve_face(radius, width):
     #   x1 = 3/5th between middle and outer edge
     #   x2 - 1/5th between middle and outer edge
     # outer egde z will be equal to 0.1875 (3/16). This is a constant
-    offset = radius - FB_THICKNESS
+    
+    #determine the offset
+    x0 = width / 2.0    #Outer Edge
+    z0 = sqrt((radius**2) - (x0**2))
+    offset = z0 - FB_THICKNESS
     
     x1 = width * 0.30
     x2 = width * 0.10
+        
+    z1 = (sqrt((radius**2) - (x1**2))) - offset
+    z2 = (sqrt((radius**2) - (x2**2))) - offset
     
-    z1 = sqrt((radius**2) - (x1**2))
-    z2 = sqrt((radius**2) - (x2**2))
-    
-    return z1 - offset, z2 - offset, x1, x2
+    return z1, z2, x1, x2
 
 def get_fret_width(min_width, max_width, max_length, current_length):
     #return the width of the fretboard at the specified fret

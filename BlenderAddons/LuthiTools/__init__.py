@@ -195,10 +195,5 @@ def unregister():
     bpy.utils.unregister_module(__name__)
     bpy.types.INFO_MT_mesh_add.remove(menu_func)
     
-if __name__ == "__main__":
-    try:
-        unregister()
-        print("module unregistered")
-    except:
-        print("Nothing to unregister")
+if __name__ == "__main__":    
     register()
