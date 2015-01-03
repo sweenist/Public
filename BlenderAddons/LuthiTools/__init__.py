@@ -77,6 +77,11 @@ class AddFretBoard(Operator):
         max = 2.5,
         default = 2.125
     )
+    fb_overhang = BoolProperty(
+        name = "FB Overhang",
+        description = "check if fretboard extends past last fret",
+        default = True
+    )
     nut_width = FloatProperty(
         name = "Nut Width",
         description = "Width of nut",
@@ -136,6 +141,10 @@ class AddFretBoard(Operator):
         row.label(text="Bridge:")
         row.prop(self, 'bridge_width', text="Width")
         
+        #Fretboard extension past last fret
+        row = layout.row()
+        row.prop(self, 'fb_overhang')
+        
     def execute(self, context):        
         #Build the Nut Mesh
         nut_v, nut_f = add_nut(self.nut_width)        
@@ -150,14 +159,34 @@ class AddFretBoard(Operator):
         bridge_mesh.update()
         
         #Build the fretboard
-        fb_v, fb_f = add_fret_board(self.fret_count, self.scale_length, self.nut_width, self.fb_bottom_width, curve_radius = self.fret_radius, overhang = True)
-        
-        for v in fb_v:
-            print(v)
+        if self.isFlat:
+            fb_v, fb_f = add_fret_board(self.fret_count, self.scale_length, self.nut_width, self.fb_bottom_width, overhang = self.fb_overhang)
+        else:
+            fb_v, fb_f = add_fret_board(self.fret_count, self.scale_length, self.nut_width, self.fb_bottom_width, curve_radius = self.fret_radius, overhang = self.fb_overhang)
         fb_mesh = bpy.data.meshes.new("FB_Mesh")
         fb_mesh.from_pydata(fb_v, [], fb_f)
         fb_mesh.update()
-        #Build the frets
+
+        #Build the frets... hot damn, this is messy
+        for i in range(1, self.fret_count + 1):
+            if self.fb_overhang:
+                max_fb_y = helper.fret_spacer(self.scale_length, self.fret_count + 1)
+            else:
+                max_fb_y = helper.fret_spacer(self.scale_length, self.fret_count)
+            #determine some important widths and lengths for following tasks    
+            fret_y_pos = helper.fret_spacer(self.scale_length, i)
+            fret_width = helper.get_fret_width(self.nut_width, self.fb_bottom_width, max_fb_y, fret_y_pos)
+            #Make the mesh!
+            f_v, f_f = add_fret(fret_width, 0.125, 0.025)
+            fret_mesh = bpy.data.meshes.new("fret_" + str(i))
+            fret_mesh.from_pydata(f_v, [], f_f)
+            fret_mesh.update()
+            fret_object = bpy.data.objects.new("Fret_" + str(i), fret_mesh)
+            context.scene.objects.link(fret_object)
+            #move the mesh
+            helper.deselect_all(context)
+            fret_object.select = True            
+            bpy.ops.transform.translate(value=(0.0, fret_y_pos, helper.FB_THICKNESS), constraint_axis=(False, False, False))
         
         #Create objects from the mesh and link to scene
         nut_object      = bpy.data.objects.new("Nut", nut_mesh)
