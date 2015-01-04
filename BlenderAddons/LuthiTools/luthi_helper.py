@@ -43,3 +43,16 @@ def get_fret_width(min_width, max_width, max_length, current_length):
     variance = max_width - min_width
     current_width = min_width + (variance * (current_length/max_length))
     return current_width
+
+def build_mesh(context, mesh_name, object_name, verts, faces, translate=None):
+    _mesh = bpy.data.meshes.new(mesh_name)
+    _mesh.from_pydata(verts, [], faces)
+    _mesh.update()
+    
+    _object = bpy.data.objects.new(object_name, _mesh)
+    context.scene.objects.link(_object)
+    
+    if translate:
+        deselect_all(context)
+        _object.select = True
+        bpy.ops.transform.translate(value=translate)

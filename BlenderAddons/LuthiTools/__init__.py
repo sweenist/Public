@@ -171,28 +171,22 @@ class AddFretBoard(Operator):
         row.prop(self, 'fb_overhang')
         
     def execute(self, context):        
-        #Build the Nut Mesh
+        #Build the Nut Object
         nut_v, nut_f = add_nut(self.nut_width)        
-        nut_mesh = bpy.data.meshes.new("Nut_mesh")
-        nut_mesh.from_pydata(nut_v, [], nut_f)
-        nut_mesh.update()
+        helper.build_mesh(context, "Nut_mesh", "Nut", nut_v, nut_f)
         
         #Build the Bridge Mesh
         bridge_v, bridge_f = add_bridge(self.bridge_width, self.scale_length)
-        bridge_mesh = bpy.data.meshes.new("Bridge_Mesh")
-        bridge_mesh.from_pydata(bridge_v, [], bridge_f)
-        bridge_mesh.update()
+        helper.build_mesh(context, "Bridge_mesh", "Bridge", bridge_v, bridge_f, (0, -self.scale_length, 0))
         
         #Build the fretboard
         if self.isFlat:
             fb_v, fb_f = add_fret_board(self.fret_count, self.scale_length, self.nut_width, self.fb_bottom_width, overhang = self.fb_overhang)
         else:
             fb_v, fb_f = add_fret_board(self.fret_count, self.scale_length, self.nut_width, self.fb_bottom_width, curve_radius = self.fret_radius, overhang = self.fb_overhang)
-        fb_mesh = bpy.data.meshes.new("FB_Mesh")
-        fb_mesh.from_pydata(fb_v, [], fb_f)
-        fb_mesh.update()
+        helper.build_mesh(context, "FB_mesh", "FretBoard", fb_v, fb_f)        
 
-        #Build the frets... hot damn, this is messy
+        #Build the frets
         for i in range(1, self.fret_count + 1):
             if self.fb_overhang:
                 max_fb_y = helper.fret_spacer(self.scale_length, self.fret_count + 1)
@@ -206,29 +200,8 @@ class AddFretBoard(Operator):
                 f_v, f_f = add_fret(fret_width, self.fret_depth, self.fret_height, self.fret_radius)
             else:
                 f_v, f_f = add_fret(fret_width, self.fret_depth, self.fret_height)
-            fret_mesh = bpy.data.meshes.new("fret_" + str(i))
-            fret_mesh.from_pydata(f_v, [], f_f)
-            fret_mesh.update()
-            fret_object = bpy.data.objects.new("Fret_" + str(i), fret_mesh)
-            context.scene.objects.link(fret_object)
-            #move the mesh
-            helper.deselect_all(context)
-            fret_object.select = True            
-            bpy.ops.transform.translate(value=(0.0, fret_y_pos, helper.FB_THICKNESS), constraint_axis=(False, False, False))
-        
-        #Create objects from the mesh and link to scene
-        nut_object      = bpy.data.objects.new("Nut", nut_mesh)
-        bridge_object   = bpy.data.objects.new("Bridge", bridge_mesh)
-        fb_object       = bpy.data.objects.new("FretBoard", fb_mesh)
-        context.scene.objects.link(nut_object)
-        context.scene.objects.link(bridge_object)
-        context.scene.objects.link(fb_object)
-        
-        #place Bridge scale length away from Nut
-        helper.deselect_all(context)
-        bridge_object.select = True
-        bpy.ops.transform.translate(value=(0, -self.scale_length, 0), constraint_axis=(False, True, False))
-        
+            helper.build_mesh(context, "fret_mesh_" + str(i), "Fret_" + str(i), f_v, f_f, (0.0, fret_y_pos, helper.FB_THICKNESS))
+            
         return {'FINISHED'}
     
 class INFO_MT_fretboard_add(bpy.types.Menu):
