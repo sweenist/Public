@@ -17,7 +17,7 @@ def float_range(start = 0.0, end = 1.0, step = 1.0):
         yield r
         r += step
         
-def fretboard_curve_face(radius, width):
+def fretboard_curve_face(radius, width, z_offset=FB_THICKNESS):
     #returns 2 absolute values for vertices along the x-axis of fretbpard face
     #make the fretboard curve according to the supplied radius
     #a radius of 12" (30cm) is typical for most electric guitars
@@ -28,7 +28,7 @@ def fretboard_curve_face(radius, width):
     #determine the offset
     x0 = width / 2.0    #Outer Edge
     z0 = sqrt((radius**2) - (x0**2))
-    offset = z0 - FB_THICKNESS
+    offset = z0 - z_offset
     
     x1 = width * 0.30
     x2 = width * 0.10

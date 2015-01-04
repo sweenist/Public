@@ -96,6 +96,21 @@ class AddFretBoard(Operator):
         max = 12.00,
         default = 2.5,
     )    
+    #fret dimensions
+    fret_depth = FloatProperty(
+        name = "Fret Depth",
+        description = "Fret length from bottom to top in Y",
+        default = 0.125,
+        min = 0.01,
+        max = 1.00
+    )
+    fret_height = FloatProperty(
+        name = "Fret Height",
+        description = "Fret height from fretboard toward string",
+        default = 0.02325,
+        min = 0.005,
+        max = 1.25
+    )
     #Inlays
     #add enum proprties
     
@@ -105,6 +120,16 @@ class AddFretBoard(Operator):
         col.label(text="Number of Frets:")
         col.prop(self, 'fret_count', text="")
         
+        #Fret Properties Box
+        box = layout.box()
+        #depth
+        row = box.row()
+        row.prop(self, 'fret_depth')
+        #height
+        row = box.row()
+        row.prop(self, 'fret_height')
+        
+        #Scale Length
         col = layout.column(align=True)
         col.label(text="Scale Length")
         col.prop(self, 'scale_length',text="")
@@ -119,7 +144,7 @@ class AddFretBoard(Operator):
                 
         row = box.row(align=True)
         row.alignment = 'RIGHT'
-        row.label(text="Curvature Radius:")
+        row.label(text="Fretboard Contour:")
         
         row.enabled = not self.isFlat
         row.prop(self, 'fret_radius', text="")
@@ -177,7 +202,10 @@ class AddFretBoard(Operator):
             fret_y_pos = helper.fret_spacer(self.scale_length, i)
             fret_width = helper.get_fret_width(self.nut_width, self.fb_bottom_width, max_fb_y, fret_y_pos)
             #Make the mesh!
-            f_v, f_f = add_fret(fret_width, 0.125, 0.025)
+            if not self.isFlat:
+                f_v, f_f = add_fret(fret_width, self.fret_depth, self.fret_height, self.fret_radius)
+            else:
+                f_v, f_f = add_fret(fret_width, self.fret_depth, self.fret_height)
             fret_mesh = bpy.data.meshes.new("fret_" + str(i))
             fret_mesh.from_pydata(f_v, [], f_f)
             fret_mesh.update()
