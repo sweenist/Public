@@ -33,9 +33,8 @@ from luthi_draw import *
 import os
 
 import bpy
-from bpy.types import Operator, Panel
+from bpy.types import Operator
 from bpy.props import FloatProperty, BoolProperty, IntProperty, EnumProperty
-from mathutils import Vector
 
 class AddFretBoard(Operator):
     """Add a Fretboard! Includes contact space for the nut and the bridge."""
@@ -43,6 +42,10 @@ class AddFretBoard(Operator):
     bl_label = "Add Fretboard"
     bl_options = {'REGISTER', 'UNDO'}
     bl_space_type = 'VIEW_3D'
+    
+    expand_fret = BoolProperty(default=True)
+    expand_fretboard = BoolProperty(default=True)
+    expand_fretboard_width = BoolProperty(default=True)
     
     fret_count = IntProperty(
         name = "Fret Count",
@@ -56,7 +59,8 @@ class AddFretBoard(Operator):
         description = "The length between the nut and the bridge",
         min = 1.414,
         max = 100.0,
-        default = 25.5
+        default = 25.5,
+        precision = 3
     )    
     fret_radius = FloatProperty(
         name = "Fretboard Radius",
@@ -64,6 +68,7 @@ class AddFretBoard(Operator):
         min = 2.50,
         max = 50.00,
         default = 12.00,
+        precision = 3
     )    
     isFlat = BoolProperty(
         name = "Flatten",
@@ -74,8 +79,9 @@ class AddFretBoard(Operator):
         name = "FB Bottom Width",
         description = "Width of fret board at the last fret. Used to determine taper",
         min = 1.625,
-        max = 2.5,
-        default = 2.125
+        max = 2.50,        
+        default = 2.125,
+        precision = 3
     )
     fb_overhang = BoolProperty(
         name = "FB Overhang",
@@ -86,15 +92,17 @@ class AddFretBoard(Operator):
         name = "Nut Width",
         description = "Width of nut",
         min = 0.005,
-        max = 10.00,
-        default = 1.625
+        max = 10.000,
+        default = 1.625,
+        precision = 3
     )    
     bridge_width = FloatProperty(
         name = "Bridge Width",
         description = "Width of guitar bridge",
         min = 0.005,
-        max = 12.00,
-        default = 2.5,
+        max = 12.000,
+        default = 2.500,
+        precision = 3
     )    
     #fret dimensions
     fret_depth = FloatProperty(
@@ -102,74 +110,91 @@ class AddFretBoard(Operator):
         description = "Fret length from bottom to top in Y",
         default = 0.125,
         min = 0.01,
-        max = 1.00
+        max = 1.00,
+        precision = 3
     )
     fret_height = FloatProperty(
         name = "Fret Height",
         description = "Fret height from fretboard toward string",
         default = 0.02325,
         min = 0.005,
-        max = 1.25
+        max = 1.25,
+        precision = 6
     )
     #Inlays
     #add enum proprties
     
     def draw(self, context):
         layout = self.layout
-        col = layout.column(align = True)
-        col.label(text="Number of Frets:")
-        col.prop(self, 'fret_count', text="")
-        
+                
         #Fret Properties Box
         box = layout.box()
-        #depth
-        row = box.row()
-        row.prop(self, 'fret_depth')
-        #height
-        row = box.row()
-        row.prop(self, 'fret_height')
-        
-        #Scale Length
-        col = layout.column(align=True)
-        col.label(text="Scale Length")
-        col.prop(self, 'scale_length',text="")
-        layout.separator()
-        
-        #Fret Curvature
-        box = layout.box()
-        box.label("Fretboard Curvature:")
-        row = box.row(align=True)      
-        row.alignment = 'RIGHT'
-        row.prop(self, 'isFlat')
-                
         row = box.row(align=True)
-        row.alignment = 'RIGHT'
-        row.label(text="Fretboard Contour:")
-        
-        row.enabled = not self.isFlat
-        row.prop(self, 'fret_radius', text="")
-        
-        #varying widths
-        box = layout.box()        
-        box.label(text="Wideness")
-        #Nut Width
-        row = box.row()
-        row.label(text="Nut:")
-        row.prop(self, 'nut_width', text="Width")
-        
-        #Fretboard bottom Width
-        row = box.row()
-        row.label(text="Fretboard Bottom")
-        row.prop(self, 'fb_bottom_width', text="Width")
-        #Bridge Width
-        row = box.row()
-        row.label(text="Bridge:")
-        row.prop(self, 'bridge_width', text="Width")
-        
-        #Fretboard extension past last fret
-        row = layout.row()
-        row.prop(self, 'fb_overhang')
-        
+        row.alignment = 'LEFT'
+        row.prop(self, 'expand_fret', text="Fret Properties",
+                icon="TRIA_DOWN" if self.expand_fret else "TRIA_RIGHT",
+                icon_only=True,emboss=False
+                )
+        if self.expand_fret:
+            row = box.row()
+            row.label(text="Fret Count:")
+            row.prop(self, 'fret_count', text="")
+
+            row = box.row()
+            row.label(text="Fret Depth:")
+            row.prop(self, 'fret_depth', text="")
+
+            row = box.row()
+            row.label(text="Fret Height:")
+            row.prop(self, 'fret_height', text="")
+            
+        #Fretboard Properties Box
+        box = layout.box()
+        row = box.row(align=True)
+
+        row.alignment = 'LEFT'
+        row.prop(self, 'expand_fretboard', text="Fretboard Properties",
+                icon="TRIA_DOWN" if self.expand_fretboard else "TRIA_RIGHT",
+                icon_only=True,emboss=False
+                )
+        if self.expand_fretboard:
+            row = box.row()
+            row.label(text="Scale Length:")
+            row.prop(self,'scale_length',text='')
+            
+            row = box.row()
+            row.label(text="Fretboard Contour:")
+            row.enabled = not self.isFlat
+            row.prop(self, 'fret_radius', text="")
+            
+            row = box.row()
+            row.label(text="Flatten Fretboard:")
+            row.prop(self, 'isFlat', text="")
+            
+            row = box.row()
+            row.label(text="Fretboard Overhang:")
+            row.prop(self, 'fb_overhang', text="")
+            
+            box.separator()
+            row = box.row(align=True)
+            row.alignment="LEFT"
+            row.prop(self, "expand_fretboard_width", text="Fretboard Widths",
+                    icon="TRIA_DOWN" if self.expand_fretboard_width else "TRIA_RIGHT",
+                    icon_only=True, emboss=False
+                    )
+            if self.expand_fretboard_width:
+                row = box.row()
+                row.label(text="Nut Width:")
+                row.prop(self, 'nut_width', text="")
+                
+                row = box.row()
+                row.label(text="Fretboard Bottom Width:")
+                row.prop(self, 'fb_bottom_width', text="")
+
+                row = box.row()
+                row.label(text="Bridge Width:")
+                row.prop(self, 'bridge_width', text="")
+                        
     def execute(self, context):        
         #Build the Nut Object
         nut_v, nut_f = add_nut(self.nut_width)        
