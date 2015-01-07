@@ -24,7 +24,7 @@ bl_info = {
     "location": "View3D > Add > Mesh > FretBoard",
     "description": "Adds a scaleable fretboard Mesh Object",
     "warning": "Still a work in progress",
-    "wiki_url": "http://sweenist.wordpress.com",
+    "wiki_url": "http://sweenist.wordpress.com/2015/01/04/luthitools/",
     "category": "Add Mesh"
 }
 
@@ -49,7 +49,7 @@ class AddFretBoard(Operator):
     
     fret_count = IntProperty(
         name = "Fret Count",
-        description = "The number of frets. Choose 0 for fretless",
+        description = "The number of frets. Still needs fret value for fretless",
         min = 0,
         max = 32,
         default = 22
@@ -69,7 +69,11 @@ class AddFretBoard(Operator):
         max = 50.00,
         default = 12.00,
         precision = 3
-    )    
+    )
+    isFretless = BoolProperty(
+        name = "",
+        description = "Emulates a fretless board if checked"        
+    )
     isFlat = BoolProperty(
         name = "Flatten",
         description = "Uncheck this to have a classical flat fretboard",
@@ -108,7 +112,7 @@ class AddFretBoard(Operator):
     fret_depth = FloatProperty(
         name = "Fret Depth",
         description = "Fret length from bottom to top in Y",
-        default = 0.125,
+        default = 0.075,
         min = 0.01,
         max = 1.00,
         precision = 3
@@ -116,10 +120,10 @@ class AddFretBoard(Operator):
     fret_height = FloatProperty(
         name = "Fret Height",
         description = "Fret height from fretboard toward string",
-        default = 0.02325,
+        default = 0.025,
         min = 0.005,
         max = 1.25,
-        precision = 6
+        precision = 5
     )
     #Inlays
     #add enum proprties
@@ -137,14 +141,20 @@ class AddFretBoard(Operator):
                 )
         if self.expand_fret:
             row = box.row()
+            row.label(text="Fretless")
+            row.prop(self, 'isFretless', text="")
+            
+            row = box.row()
             row.label(text="Fret Count:")
             row.prop(self, 'fret_count', text="")
 
             row = box.row()
+            row.enabled = not self.isFretless
             row.label(text="Fret Depth:")
             row.prop(self, 'fret_depth', text="")
 
             row = box.row()
+            row.enabled = not self.isFretless
             row.label(text="Fret Height:")
             row.prop(self, 'fret_height', text="")
             
@@ -211,22 +221,23 @@ class AddFretBoard(Operator):
             fb_v, fb_f = add_fret_board(self.fret_count, self.scale_length, self.nut_width, self.fb_bottom_width, curve_radius = self.fret_radius, overhang = self.fb_overhang)
         helper.build_mesh(context, "FB_mesh", "FretBoard", fb_v, fb_f)        
 
-        #Build the frets
-        for i in range(1, self.fret_count + 1):
-            if self.fb_overhang:
-                max_fb_y = helper.fret_spacer(self.scale_length, self.fret_count + 1)
-            else:
-                max_fb_y = helper.fret_spacer(self.scale_length, self.fret_count)
-            #determine some important widths and lengths for following tasks    
-            fret_y_pos = helper.fret_spacer(self.scale_length, i)
-            fret_width = helper.get_fret_width(self.nut_width, self.fb_bottom_width, max_fb_y, fret_y_pos)
-            #Make the mesh!
-            if not self.isFlat:
-                f_v, f_f = add_fret(fret_width, self.fret_depth, self.fret_height, self.fret_radius)
-            else:
-                f_v, f_f = add_fret(fret_width, self.fret_depth, self.fret_height)
-            helper.build_mesh(context, "fret_mesh_" + str(i), "Fret_" + str(i), f_v, f_f, (0.0, fret_y_pos, helper.FB_THICKNESS))
-            
+        #Build the frets if not Fretless
+        if not self.isFretless:
+            for i in range(1, self.fret_count + 1):
+                if self.fb_overhang:
+                    max_fb_y = helper.fret_spacer(self.scale_length, self.fret_count + 1)
+                else:
+                    max_fb_y = helper.fret_spacer(self.scale_length, self.fret_count)
+                #determine some important widths and lengths for following tasks    
+                fret_y_pos = helper.fret_spacer(self.scale_length, i)
+                fret_width = helper.get_fret_width(self.nut_width, self.fb_bottom_width, max_fb_y, fret_y_pos)
+                #Make the mesh!
+                if not self.isFlat:
+                    f_v, f_f = add_fret(fret_width, self.fret_depth, self.fret_height, self.fret_radius)
+                else:
+                    f_v, f_f = add_fret(fret_width, self.fret_depth, self.fret_height)
+                helper.build_mesh(context, "fret_mesh_" + str(i), "Fret_" + str(i), f_v, f_f, (0.0, fret_y_pos, helper.FB_THICKNESS))
+                
         return {'FINISHED'}
     
 class INFO_MT_fretboard_add(bpy.types.Menu):
@@ -240,7 +251,8 @@ class INFO_MT_fretboard_add(bpy.types.Menu):
         layout.operator("mesh.custom_fretboard_add", text="Fretboard")
 
 def menu_func(self, context):
-    self.layout.menu("INFO_MT_fretboard_add", text="Fretboard")
+    self.layout.separator()
+    self.layout.menu("INFO_MT_fretboard_add", text="Guitar")
     
 def register():
     bpy.utils.register_module(__name__)
