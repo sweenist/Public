@@ -19,10 +19,10 @@
 bl_info = {
     "name": "Luthier Tool",
     "author": "Ryan Sweeney",
-    "version": (0, 0),
+    "version": (0, 1),
     "blender": (2, 72, 0),
-    "location": "View3D > Add > Mesh > FretBoard",
-    "description": "Adds a scaleable fretboard Mesh Object",
+    "location": "View3D > Add > Mesh > Guitar",
+    "description": "Adds a scaleable guitar fretboard Mesh",
     "warning": "Still a work in progress",
     "wiki_url": "http://sweenist.wordpress.com/2015/01/04/luthitools/",
     "category": "Add Mesh"
