@@ -1,6 +1,6 @@
 import bpy
 import bmesh
-import luthi_helper as helper
+from . import luthi_helper as helper
 from math import pi, sqrt, sin, cos
 
 FB_THICKNESS = 0.1875

@@ -28,9 +28,13 @@ bl_info = {
     "category": "Add Mesh"
 }
 
-import luthi_helper as helper
-from luthi_draw import *
-import os
+if "bpy" in locals():
+    import imp
+    imp.reload(luthi_helper)
+    imp.reload(luthi_draw)
+else:
+    from . import luthi_helper
+    from . import luthi_draw
 
 import bpy
 from bpy.types import Operator
@@ -83,7 +87,7 @@ class AddFretBoard(Operator):
         name = "FB Bottom Width",
         description = "Width of fret board at the last fret. Used to determine taper",
         min = 1.625,
-        max = 2.50,        
+        max = 6.0,        
         default = 2.125,
         precision = 3
     )
@@ -96,7 +100,7 @@ class AddFretBoard(Operator):
         name = "Nut Width",
         description = "Width of nut",
         min = 0.005,
-        max = 10.000,
+        max = 5.000,
         default = 1.625,
         precision = 3
     )    
@@ -207,36 +211,36 @@ class AddFretBoard(Operator):
                         
     def execute(self, context):        
         #Build the Nut Object
-        nut_v, nut_f = add_nut(self.nut_width)        
-        helper.build_mesh(context, "Nut_mesh", "Nut", nut_v, nut_f)
+        nut_v, nut_f = luthi_draw.add_nut(self.nut_width)        
+        luthi_helper.build_mesh(context, "Nut_mesh", "Nut", nut_v, nut_f)
         
         #Build the Bridge Mesh
-        bridge_v, bridge_f = add_bridge(self.bridge_width, self.scale_length)
-        helper.build_mesh(context, "Bridge_mesh", "Bridge", bridge_v, bridge_f, (0, -self.scale_length, 0))
+        bridge_v, bridge_f = luthi_draw.add_bridge(self.bridge_width, self.scale_length)
+        luthi_helper.build_mesh(context, "Bridge_mesh", "Bridge", bridge_v, bridge_f, (0, -self.scale_length, 0))
         
         #Build the fretboard
         if self.isFlat:
-            fb_v, fb_f = add_fret_board(self.fret_count, self.scale_length, self.nut_width, self.fb_bottom_width, overhang = self.fb_overhang)
+            fb_v, fb_f = luthi_draw.add_fret_board(self.fret_count, self.scale_length, self.nut_width, self.fb_bottom_width, overhang = self.fb_overhang)
         else:
-            fb_v, fb_f = add_fret_board(self.fret_count, self.scale_length, self.nut_width, self.fb_bottom_width, curve_radius = self.fret_radius, overhang = self.fb_overhang)
-        helper.build_mesh(context, "FB_mesh", "FretBoard", fb_v, fb_f)        
+            fb_v, fb_f = luthi_draw.add_fret_board(self.fret_count, self.scale_length, self.nut_width, self.fb_bottom_width, curve_radius = self.fret_radius, overhang = self.fb_overhang)
+        luthi_helper.build_mesh(context, "FB_mesh", "FretBoard", fb_v, fb_f)        
 
         #Build the frets if not Fretless
         if not self.isFretless:
             for i in range(1, self.fret_count + 1):
                 if self.fb_overhang:
-                    max_fb_y = helper.fret_spacer(self.scale_length, self.fret_count + 1)
+                    max_fb_y = luthi_helper.fret_spacer(self.scale_length, self.fret_count + 1)
                 else:
-                    max_fb_y = helper.fret_spacer(self.scale_length, self.fret_count)
+                    max_fb_y = luthi_helper.fret_spacer(self.scale_length, self.fret_count)
                 #determine some important widths and lengths for following tasks    
-                fret_y_pos = helper.fret_spacer(self.scale_length, i)
-                fret_width = helper.get_fret_width(self.nut_width, self.fb_bottom_width, max_fb_y, fret_y_pos)
+                fret_y_pos = luthi_helper.fret_spacer(self.scale_length, i)
+                fret_width = luthi_helper.get_fret_width(self.nut_width, self.fb_bottom_width, max_fb_y, fret_y_pos)
                 #Make the mesh!
                 if not self.isFlat:
-                    f_v, f_f = add_fret(fret_width, self.fret_depth, self.fret_height, self.fret_radius)
+                    f_v, f_f = luthi_draw.add_fret(fret_width, self.fret_depth, self.fret_height, self.fret_radius)
                 else:
-                    f_v, f_f = add_fret(fret_width, self.fret_depth, self.fret_height)
-                helper.build_mesh(context, "fret_mesh_" + str(i), "Fret_" + str(i), f_v, f_f, (0.0, fret_y_pos, helper.FB_THICKNESS))
+                    f_v, f_f = luthi_draw.add_fret(fret_width, self.fret_depth, self.fret_height)
+                luthi_helper.build_mesh(context, "fret_mesh_" + str(i), "Fret_" + str(i), f_v, f_f, (0.0, fret_y_pos, luthi_helper.FB_THICKNESS))
                 
         return {'FINISHED'}
     
