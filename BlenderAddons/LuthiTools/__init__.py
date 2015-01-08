@@ -17,7 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 bl_info = {
-    "name": "Luthier Tool",
+    "name": "LuthiTool",
     "author": "Ryan Sweeney",
     "version": (0, 1),
     "blender": (2, 72, 0),
