@@ -54,7 +54,7 @@ class AddFretBoard(Operator):
     fret_count = IntProperty(
         name = "Fret Count",
         description = "The number of frets. Still needs fret value for fretless",
-        min = 0,
+        min = 1,
         max = 32,
         default = 22
     )    
