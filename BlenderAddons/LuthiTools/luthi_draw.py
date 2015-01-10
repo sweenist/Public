@@ -1,7 +1,7 @@
 import bpy
 import bmesh
-from . import luthi_helper as helper
-from math import pi, sqrt, sin, cos
+from . import luthi_helper
+from math import sqrt
 
 FB_THICKNESS = 0.1875
 
@@ -12,7 +12,7 @@ def add_fret(width, depth, height, radius=None):
     z_mid = height * 0.70
     
     if radius:
-        z1, z2, x1, x2 = helper.fretboard_curve_face(radius, width, 0.00)
+        z1, z2, x1, x2 =  luthi_helper.fretboard_curve_face(radius, width, 0.00)
     else:
         z1 = z2 = 0.00
         x1 = x*0.60
@@ -104,75 +104,79 @@ def add_fret(width, depth, height, radius=None):
 
 def add_fret_board(fret_count, scale_length, min_width, max_width, curve_radius = None, overhang = True):
 
-    verts = [( min_width / 2.0, 0.00, 0.00),    #1
-             (-min_width / 2.0, 0.00, 0.00),    #2
-             ( min_width / 2.0, 0.00, helper.FB_THICKNESS), #3
-             (-min_width / 2.0, 0.00, helper.FB_THICKNESS)  #4
-    ]
+    verts = []
     faces = []
+    frets = []
         
-    #Add bottom vertices at the last fret or overhang. Negligible but...
+    #get y values of fret medians
+    for i in range(fret_count + 1):
+        frets.append( luthi_helper.fret_spacer(scale_length, i))
+        
+    #Add bottom vertices at the last fret or overhang.
     if overhang:
-        overhang_y = helper.fret_spacer(scale_length, fret_count + 1)
-    else:
-        overhang_y = helper.fret_spacer(scale_length, fret_count)
+        frets.append( luthi_helper.fret_spacer(scale_length, fret_count + 1))
 
     #Add Fretboard vertices
-    verts.append(( max_width / 2.0, overhang_y, 0.00))  #5
-    verts.append((-max_width / 2.0, overhang_y, 0.00))  #6
-    verts.append(( max_width / 2.0, overhang_y, helper.FB_THICKNESS))   #7
-    verts.append((-max_width / 2.0, overhang_y, helper.FB_THICKNESS))   #8
-    
-    #Add curvature
     if curve_radius:
-        #use the fretboard_curve_face(radius width) function here
-        min_z1, min_z2, min_x1, min_x2 = helper.fretboard_curve_face(curve_radius, min_width)
-        max_z1, max_z2, max_x1, max_x2 = helper.fretboard_curve_face(curve_radius, max_width)
-        
-        verts.append(( min_x1, 0.00, min_z1))   #9
-        verts.append((-min_x1, 0.00, min_z1))   #10
-        verts.append(( min_x2, 0.00, min_z2))   #11
-        verts.append((-min_x2, 0.00, min_z2))   #12
-        verts.append(( max_x1, overhang_y, max_z1))  #13
-        verts.append((-max_x1, overhang_y, max_z1))  #14
-        verts.append(( max_x2, overhang_y, max_z2))  #15
-        verts.append((-max_x2, overhang_y, max_z2))  #16
+        for fret_y in frets:        
+            cur_width =  luthi_helper.get_fret_width(min_width, max_width,frets[-1],fret_y)
+            z1, z2, x1, x2 =  luthi_helper.fretboard_curve_face(curve_radius, cur_width)
+            
+            verts.append((-cur_width / 2.0, fret_y, 0.00))          #0
+            verts.append((-cur_width / 2.0, fret_y, FB_THICKNESS))  #1
+            verts.append((-x1, fret_y, z1))                         #2
+            verts.append((-x2, fret_y, z2))                         #3
+            verts.append(( x2, fret_y, z2))                         #4
+            verts.append(( x1, fret_y, z1))                         #5
+            verts.append(( cur_width / 2.0, fret_y, FB_THICKNESS))  #6
+            verts.append(( cur_width / 2.0, fret_y, 0.00))          #7
 
-        verts.append(( max_x1, overhang_y, 0.00))  #17
-        verts.append((-max_x1, overhang_y, 0.00))  #18
-        verts.append(( max_x2, overhang_y, 0.00))  #19
-        verts.append((-max_x2, overhang_y, 0.00))  #20
+        #build the end face on the fretboard
+        z1, z2, x1, x2 =  luthi_helper.fretboard_curve_face(curve_radius, min_width)
+        verts.append(( x1, frets[-1], 0.00))
+        verts.append(( x2, frets[-1], 0.00)) 
+        verts.append((-x2, frets[-1], 0.00)) 
+        verts.append((-x1, frets[-1], 0.00)) 
+
+    else:   #Flat Board
+        for fret_y in frets:
+            cur_width =  luthi_helper.get_fret_width(min_width, max_width,frets[-1],fret_y)
+            verts.append((-cur_width / 2.0, fret_y, 0.00))
+            verts.append((-cur_width / 2.0, fret_y, FB_THICKNESS))
+            verts.append(( cur_width / 2.0, fret_y, FB_THICKNESS))
+            verts.append(( cur_width / 2.0, fret_y, 0.00))            
         
     #append faces
     if curve_radius:
-        faces.extend([
-            ( 3, 9,11, 1),
-            ( 0,10, 8, 3),
-            ( 0, 1,11,10),
-            ( 3, 1, 5, 7),
-            ( 7, 5,17,13),
-            (13,17,19,15),
-            (19,18,14,15),
-            (14,18,16,12),
-            (12,16, 4, 6),
-            ( 4, 0, 2, 6),
-            ( 2, 8,12, 6),
-            (12, 8,10,14),
-            (10,11,15,14),
-            (15,11, 9,13),
-            ( 9, 3, 7,13)
-            ]
-        )
+        frets.pop()
+        for i in range(len(frets)):
+            offset = i * 8
+            for j in range(7):
+                faces.append(( 1 + offset, 0 + offset, 8 + offset, 9 + offset))
+                offset += 1
+
+        #fill bottom faces
+        offset = len(frets) * 8
+        faces.extend([(offset, 11 + offset, 2 + offset, 1 + offset),
+                      (11 + offset, 10 + offset, 3 + offset, 2 + offset),
+                      (10 + offset, 9 + offset, 4 + offset, 3 + offset),
+                      (9 + offset, 8 + offset, 5 + offset, 4 + offset),
+                      (8 + offset, 7 + offset, 6 + offset, 5 + offset)
+                    ]
+                )
+     
     #flat fretboard
     else:
-        faces.extend([
-            ( 0, 2, 3, 1),
-            ( 7, 5, 4, 6),
-            ( 1, 3, 7, 5),
-            ( 3, 7, 6, 2),
-            ( 2, 6, 4, 0)
-            ]
-        )
+        frets.pop()
+        for i in range(len(frets)):
+            offset = i * 4
+            for j in range(3):
+                faces.append(( 1 + offset, 0 + offset, 4 + offset, 5 + offset))
+                offset += 1
+
+        #fill bottom faces
+        offset = len(verts) - 4
+        faces.extend([(offset, 3 + offset, 2 + offset, 1 + offset)])
 
     return verts, faces
 
@@ -180,7 +184,7 @@ def add_nut(width):
     verts = []
     faces = []
     
-    for x in helper.float_range(-width/2.00, ((width/2.00) + (width/4.00)), width/4.00):
+    for x in  luthi_helper.float_range(-width/2.00, ((width/2.00) + (width/4.00)), width/4.00):
         verts.append((x, 0.00, 0.25))
         verts.append((x, 0.00, 0.00))
         verts.append((x, 0.20, 0.00))
@@ -194,7 +198,7 @@ def add_nut(width):
 def add_bridge(width, length):
     verts = []
     faces = []
-    for x in helper.float_range(-width/2.00, ((width/2.00) + (width/4.00)), width/4.00):
+    for x in  luthi_helper.float_range(-width/2.00, ((width/2.00) + (width/4.00)), width/4.00):
         verts.append((x, 0.00, 0.45))
         verts.append((x, 0.00, 0.20))
         verts.append((x, -.50, 0.20))
